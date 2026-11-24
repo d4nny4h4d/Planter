@@ -134,7 +134,7 @@ export function PlantDetail({ id }: { id: string }) {
 
         <div className="ai-row">
           <button className="btn" onClick={() => navigate(`/doctor?plant=${plant.id}`)}>
-            <HeartPulse /> Dr. Plant
+            <HeartPulse /> Dr. Green
           </button>
           {plant.bonsai && (
             <button className="btn" onClick={() => navigate(`/advice/${plant.id}`)}>

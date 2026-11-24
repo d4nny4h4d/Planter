@@ -117,7 +117,7 @@ export function Settings() {
             </div>
           </label>
           <p className="muted small">
-            Identification, name look-ups, personal care plans, Dr. Plant and styling advice use Claude. Create a key at platform.claude.com. It is stored only on this device and sent only to Anthropic. Everything else works without one.
+            Identification, name look-ups, personal care plans, Dr. Green and styling advice use Claude. Create a key at platform.claude.com. It is stored only on this device and sent only to Anthropic. Everything else works without one.
           </p>
           <div>
             <span className="label">Model</span>

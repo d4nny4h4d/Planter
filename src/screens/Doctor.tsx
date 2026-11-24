@@ -82,7 +82,7 @@ export function Doctor({ plantId }: { plantId: string | null }) {
       }
       const { addReport, logCare } = useStore.getState()
       addReport(report)
-      if (plant) logCare(plant.id, 'note', `Dr. Plant: ${report.headline}. ${report.summary}`)
+      if (plant) logCare(plant.id, 'note', `Dr. Green: ${report.headline}. ${report.summary}`)
       navigator.vibrate?.(20)
       setPhotos([])
       setSymptoms([])
@@ -99,13 +99,13 @@ export function Doctor({ plantId }: { plantId: string | null }) {
   return (
     <Screen id="/doctor" tab>
       <header className="page-head">
-        <h1>Dr. Plant</h1>
+        <h1>Dr. Green</h1>
       </header>
       <p className="muted">Photograph a plant that looks unwell. You get a diagnosis, a step-by-step cure and what to expect as it recovers.</p>
 
       {!hasKey && (
         <Callout tone="warn">
-          Dr. Plant needs your Anthropic API key.{' '}
+          Dr. Green needs your Anthropic API key.{' '}
           <button className="link" onClick={() => navigate('/settings')}>
             Add it in Settings
           </button>
@@ -165,7 +165,7 @@ export function Doctor({ plantId }: { plantId: string | null }) {
         <p className="muted small">
           {plant
             ? 'Its species, spot, care plan and watering history are taken into account.'
-            : 'Dr. Plant will identify it from the photos. Pick one of your plants for a diagnosis that uses its care history.'}
+            : 'Dr. Green will identify it from the photos. Pick one of your plants for a diagnosis that uses its care history.'}
         </p>
       </section>
 

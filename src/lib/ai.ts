@@ -424,7 +424,7 @@ const doctorReport = z.object({
 
 export type DoctorFindings = Omit<DoctorReport, 'id' | 'at' | 'plantId' | 'plantName' | 'photoIds' | 'symptoms' | 'notes' | 'resolved'> & { identifiedAs: string }
 
-/** Dr. Plant: diagnose from one or more photos, plus whatever the grower has noticed. */
+/** Dr. Green: diagnose from one or more photos, plus whatever the grower has noticed. */
 export async function diagnose(
   input: { photos: string[]; plant?: Plant; symptoms: string[]; notes: string },
   signal?: AbortSignal,
@@ -435,7 +435,7 @@ export async function diagnose(
     : 'The plant is not in the grower\'s collection; identify it from the photos as far as you can.'
   const r = await ask(
     doctorReport,
-    `You are a plant pathologist and horticulturist examining photos of a sick or worrying plant for the "Dr. Plant" section of a personal plant-care app. Work like a clinician: look at every photo, name what you see, weigh the possible causes, then prescribe.
+    `You are a plant pathologist and horticulturist examining photos of a sick or worrying plant for the "Dr. Green" section of a personal plant-care app. Work like a clinician: look at every photo, name what you see, weigh the possible causes, then prescribe.
 
 Consider pests, fungal, bacterial and viral disease, nutrient deficiency or excess, over- and under-watering, light, heat, cold, air-conditioning draughts, salt build-up from hard or desalinated water, and physical damage. Abiotic causes (watering, light, heat, salts) are far more common than disease; do not reach for a pathogen when culture explains the symptoms. Use the care log, the spot and the climate to decide between causes that look alike.
 

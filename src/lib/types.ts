@@ -296,7 +296,7 @@ export interface Diagnosis {
   cause: string
 }
 
-/** One Dr. Plant check-up. */
+/** One Dr. Green check-up. */
 export interface DoctorReport {
   id: string
   at: number

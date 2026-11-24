@@ -11,7 +11,7 @@ A personal plant and bonsai care app for the phone. It runs as an installable we
 - **Bonsai** – your trees with watering, feeding, wiring and repotting reminders; 16 species guides with seasonal calendars; 10 styles and 8 technique guides; photo-based styling advice.
 - **Today** – what needs doing now, one tap to tick it off, snooze, undo.
 - **Journal and photos** – a care log and growth timeline for every plant.
-- **Dr. Plant** – photograph a plant that looks unwell (up to four photos, plus any symptoms you have noticed) for a diagnosis, a step-by-step cure, what to buy, whether it can spread, and what recovery looks like. Check-ups are kept, and a re-check reminder appears on Today.
+- **Dr. Green** – photograph a plant that looks unwell (up to four photos, plus any symptoms you have noticed) for a diagnosis, a step-by-step cure, what to buy, whether it can spread, and what recovery looks like. Check-ups are kept, and a re-check reminder appears on Today.
 - **Backup** – export and restore the whole collection, photos included, as one file.
 
 ## Photo recognition

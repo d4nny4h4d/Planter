@@ -122,7 +122,7 @@ export function Today() {
           {followUps.length > 0 && (
             <section className="group">
               <h2 className="group-title">
-                Dr. Plant follow-ups <span>{followUps.length}</span>
+                Dr. Green follow-ups <span>{followUps.length}</span>
               </h2>
               <div className="card list">
                 {followUps.map((r) => (

@@ -19,7 +19,7 @@ const TABS = [
   { path: '/', label: 'Today', icon: Home },
   { path: '/plants', label: 'Plants', icon: Leaf },
   { path: '/bonsai', label: 'Bonsai', icon: TreePine },
-  { path: '/doctor', label: 'Dr. Plant', icon: Stethoscope },
+  { path: '/doctor', label: 'Dr. Green', icon: Stethoscope },
 ]
 
 function useWeatherRefresh() {
