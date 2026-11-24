@@ -2,10 +2,10 @@ import Anthropic from '@anthropic-ai/sdk'
 import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod'
 import { z } from 'zod'
 import { BONSAI_STYLES } from '../data/bonsai'
-import { seasonFor } from './care'
+import { seasonFor, spotKey } from './care'
 import { base64Of } from './image'
 import { useStore } from './store'
-import type { Advice, BonsaiProfile, CareProfile, Plant } from './types'
+import type { Advice, BonsaiProfile, CareProfile, CarePlan, Plant } from './types'
 
 const seasons = z.object({ spring: z.number(), summer: z.number(), autumn: z.number(), winter: z.number() })
 const mix = z.array(z.object({ ingredient: z.string(), parts: z.number() }))
@@ -115,6 +115,24 @@ const advice = z.object({
   ),
 })
 
+const carePlan = z.object({
+  headline: z.string(),
+  watering: z.object({
+    everyDays: z.object({ cool: z.number(), mild: z.number(), hot: z.number(), extreme: z.number() }),
+    amount: z.string(),
+    method: z.string(),
+    bestTime: z.string(),
+    why: z.string(),
+  }),
+  placement: z.object({ verdict: z.enum(['ideal', 'workable', 'move it']), advice: z.string() }),
+  light: z.string(),
+  climate: z.string(),
+  humidity: z.string(),
+  feeding: z.object({ everyWeeks: z.number(), advice: z.string() }),
+  thisMonth: z.array(z.string()),
+  watchFor: z.array(z.string()),
+})
+
 export class AiError extends Error {
   needsKey: boolean
   constructor(message: string, needsKey = false) {
@@ -145,7 +163,11 @@ function situation() {
     `Date: ${now.toLocaleDateString('en', { month: 'long', year: 'numeric' })} (${seasonFor(now, place?.lat)} by the calendar).`,
   ]
   if (place) lines.push(`Grower's location: ${place.name} (latitude ${place.lat}).`)
-  if (weather) lines.push(`Outdoor conditions now: ${Math.round(weather.tempC)}°C, high of ${Math.round(weather.maxC)}°C, ${weather.humidity}% humidity.`)
+  if (weather) {
+    lines.push(`Outdoor conditions now: ${Math.round(weather.tempC)}°C, high of ${Math.round(weather.maxC)}°C, ${weather.humidity}% humidity.`)
+    if (weather.highs?.length)
+      lines.push(`Seven-day forecast highs: ${weather.highs.map(Math.round).join(', ')}°C; lows: ${(weather.lows ?? []).map(Math.round).join(', ')}°C.`)
+  }
   return lines.join(' ')
 }
 
@@ -321,4 +343,68 @@ export function stylingAdvice(plant: Plant, photo: string): Promise<Advice> {
 ${situation()}`,
     [image(photo), { type: 'text', text: `${describe(plant)}${plant.style ? `\nCurrent style goal: ${plant.style}.` : ''}` }],
   )
+}
+
+function describeSpot(plant: Plant) {
+  const s = plant.spot ?? {}
+  const lines = [`Kept ${plant.where}s.`]
+  if (s.pot) lines.push(`Container: ${s.pot}${s.potCm ? `, about ${s.potCm} cm across` : ''}.`)
+  else if (s.potCm) lines.push(`Pot about ${s.potCm} cm across.`)
+  if (plant.where === 'indoor') {
+    if (s.windowFacing) lines.push(`Nearest window: ${s.windowFacing}.`)
+    if (s.windowDistance) lines.push(`Distance from that window: ${s.windowDistance}.`)
+    if (s.ac) lines.push(`Air conditioning: ${s.ac}${s.acTempC ? `, set to ${s.acTempC}°C` : ''}.`)
+    if (s.nearVent != null) lines.push(s.nearVent ? 'It sits in the direct airflow of an AC vent.' : 'It is out of the direct AC airflow.')
+  } else {
+    if (s.exposure) lines.push(`Sun exposure: ${s.exposure}.`)
+    if (s.shelter) lines.push(`Shelter: ${s.shelter}.`)
+  }
+  if (s.notes) lines.push(`Grower's description: ${s.notes}`)
+  return lines.join(' ')
+}
+
+/** A care plan for one plant in its actual spot, climate and season. */
+export async function writeCarePlan(plant: Plant, signal?: AbortSignal): Promise<CarePlan> {
+  const { settings } = useStore.getState()
+  const species = plant.profile ?? plant.bonsai
+  const r = await ask(
+    carePlan,
+    `You are an expert horticulturist${plant.bonsai ? ' and bonsai professional' : ''} writing a personal care plan for one specific plant in a personal plant-care app. You are given the species care sheet, exactly where the plant lives, the grower's location, the season, current weather and the week's forecast. Tailor every line to those facts; do not restate generic species advice.
+
+Be specific and quantified. Give water volumes in millilitres or litres scaled to the stated pot size, distances from windows in metres, AC set-points and airflow advice in °C and metres, hours of sun, and named times of day. Where the spot is wrong for the species, say so plainly and say exactly where to move it. Where a detail was not given, state the assumption you made in the relevant field rather than hedging.
+
+Fields:
+- headline: one sentence, the single most important thing for this plant in this spot right now.
+- watering.everyDays: days between waterings for THIS plant in THIS spot at four levels of outdoor daily high: cool (under 20°C), mild (20–29°C), hot (30–37°C), extreme (38°C or more). The app picks the band from the live forecast, so the schedule shifts automatically as the weather changes. For an indoor plant, account for how the stated air conditioning use decouples it from the outdoor heat (and for AC drying the air and the pot). Whole numbers, minimum 1.
+- watering.amount, method, bestTime: how much, how, and when in the day. watering.why: one or two sentences on why this schedule fits this spot.
+- placement.verdict and advice: judge the current spot for this species (light, heat, airflow) and give the exact adjustment if any.
+- light: what this spot's light means for this species at this latitude and season, and what to change.
+- climate: for indoor plants, the air conditioning advice (set-point, distance from vents, what happens when the AC is off or the household travels); for outdoor plants, heat, sun-scorch, wind and cold protection for this location and season.
+- humidity: what the current indoor or outdoor humidity means here and what, if anything, to do.
+- feeding.everyWeeks: weeks between feeds right now (0 means do not feed this season). feeding.advice: product type, dilution, and timing.
+- thisMonth: three to five concrete jobs for this month for this plant.
+- watchFor: two to four early warning signs specific to this spot and season, each with what it means.
+
+Keep each prose field to one to three sentences. Metric units and °C.
+
+${situation()}`,
+    [
+      {
+        type: 'text',
+        text: `Plant: ${plant.nickname}\n\nWhere it lives: ${describeSpot(plant)}\n\n${describe(plant)}\n\nSpecies care sheet:\n${JSON.stringify(species)}`,
+      },
+    ],
+    signal,
+  )
+  const days = (n: number) => Math.min(60, Math.max(1, Math.round(n) || 1))
+  return {
+    ...r,
+    watering: {
+      ...r.watering,
+      everyDays: { cool: days(r.watering.everyDays.cool), mild: days(r.watering.everyDays.mild), hot: days(r.watering.everyDays.hot), extreme: days(r.watering.everyDays.extreme) },
+    },
+    feeding: { ...r.feeding, everyWeeks: Math.max(0, Math.round(r.feeding.everyWeeks) || 0) },
+    createdAt: Date.now(),
+    basis: { season: seasonFor(new Date(), settings.place?.lat), place: settings.place?.name ?? '', spotKey: spotKey(plant.where, plant.spot) },
+  }
 }

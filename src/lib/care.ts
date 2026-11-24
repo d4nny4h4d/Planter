@@ -1,4 +1,4 @@
-import type { CareAction, Plant, Season, Weather } from './types'
+import type { CareAction, HeatBand, Plant, Season, Spot, Weather } from './types'
 import { DAY, daysFromToday } from './util'
 
 export interface CareContext {
@@ -17,6 +17,7 @@ export function seasonFor(date = new Date(), lat = 25): Season {
 
 /** Pots dry faster in heat: scale the reference interval by today's forecast high. */
 export function heatFactor(maxC: number | undefined) {
+  if (maxC != null) maxC = Math.round(maxC)
   if (maxC == null) return 1
   if (maxC >= 40) return 0.45
   if (maxC >= 35) return 0.6
@@ -32,18 +33,54 @@ export function baseWaterInterval(plant: Plant, season: Season) {
 
 /** Reference interval adjusted for where the plant lives and today's heat. */
 export function adjustedInterval(base: number, where: 'indoor' | 'outdoor', ctx: CareContext) {
-  const factor = where === 'outdoor' ? heatFactor(ctx.weather?.maxC) : 1
+  const factor = where === 'outdoor' ? heatFactor(drivingHigh(ctx.weather)) : 1
   return Math.max(1, Math.round(base * factor))
+}
+
+/** The high that drives watering: the mean of the next three days, so one odd day does not flip the schedule. */
+export function drivingHigh(weather: Weather | undefined) {
+  if (!weather) return undefined
+  const next = weather.highs?.slice(0, 3).filter((n) => typeof n === 'number')
+  return next?.length ? next.reduce((a, b) => a + b, 0) / next.length : weather.maxC
+}
+
+export function heatBand(ctx: CareContext): HeatBand {
+  const high = drivingHigh(ctx.weather)
+  if (high == null) return ctx.season === 'summer' ? 'hot' : ctx.season === 'winter' ? 'cool' : 'mild'
+  return high >= 38 ? 'extreme' : high >= 30 ? 'hot' : high >= 20 ? 'mild' : 'cool'
+}
+
+export const BAND_LABEL: Record<HeatBand, [string, string]> = {
+  cool: ['Cool', 'under 20°'],
+  mild: ['Mild', '20–29°'],
+  hot: ['Hot', '30–37°'],
+  extreme: ['Extreme', '38°+'],
+}
+
+export const spotKey = (where: string, spot: Spot | undefined) => JSON.stringify([where, spot ?? {}])
+
+/** Why a plan should be rewritten, or undefined while it still fits. */
+export function planStale(plant: Plant, ctx: CareContext, place: string | undefined) {
+  const plan = plant.plan
+  if (!plan) return undefined
+  if (plan.basis.spotKey !== spotKey(plant.where, plant.spot)) return 'its spot changed'
+  if (plan.basis.season !== ctx.season) return `it is now ${ctx.season}`
+  if (place && plan.basis.place !== place) return 'your location changed'
+  if (Date.now() - plan.createdAt > 30 * DAY) return 'it is over a month old'
+  return undefined
 }
 
 export function waterInterval(plant: Plant, ctx: CareContext) {
   if (plant.waterEveryDays) return plant.waterEveryDays
+  const planned = plant.plan?.watering.everyDays[heatBand(ctx)]
+  if (planned && planned > 0) return Math.max(1, Math.round(planned))
   return adjustedInterval(baseWaterInterval(plant, ctx.season), plant.where, ctx)
 }
 
 /** Days between feeds, or null when the plant should not be fed this season. */
 export function feedInterval(plant: Plant, ctx: CareContext) {
   if (plant.feedEveryDays) return plant.feedEveryDays
+  if (plant.plan) return plant.plan.feeding.everyWeeks > 0 ? Math.max(7, Math.round(plant.plan.feeding.everyWeeks * 7)) : null
   // Skip winter feeding, except where winters stay warm enough for growth (the Gulf's main growing season).
   if (ctx.season === 'winter' && !(ctx.weather && ctx.weather.maxC >= 20)) return null
   const weeks = plant.profile?.fertilizer.intervalWeeks ?? plant.bonsai?.fertilizing.intervalWeeks

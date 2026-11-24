@@ -1,6 +1,7 @@
 import { Camera, Droplets, FlaskConical, HeartPulse, MoreHorizontal, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 import { BonsaiSheet, CareSheet } from '../components/CareSheet'
+import { PlanCard } from '../components/Plan'
 import { TaskRow } from '../components/TaskRow'
 import { Chip, Empty, Screen, Segmented, Sheet, TopBar, usePhoto } from '../components/ui'
 import { BONSAI_STYLES } from '../data/bonsai'
@@ -160,8 +161,10 @@ export function PlantDetail({ id }: { id: string }) {
         />
 
         <div className="view" key={tab}>
-          {tab === 'care' && plant.profile && <CareSheet profile={plant.profile} where={plant.where} />}
-          {tab === 'care' && plant.bonsai && <BonsaiSheet profile={plant.bonsai} where={plant.where} />}
+          {tab === 'care' && <PlanCard plant={plant} />}
+          {tab === 'care' && <h2 className="group-title">Species care sheet</h2>}
+          {tab === 'care' && plant.profile && <CareSheet profile={plant.profile} where={plant.where} planned={!!plant.plan} />}
+          {tab === 'care' && plant.bonsai && <BonsaiSheet profile={plant.bonsai} where={plant.where} planned={!!plant.plan} />}
 
           {tab === 'journal' &&
             (plant.log.length === 0 ? (
@@ -354,7 +357,6 @@ function LogSheet({ plant, open, onClose }: { plant: Plant; open: boolean; onClo
 function EditSheet({ plant, open, onClose }: { plant: Plant; open: boolean; onClose: () => void }) {
   const ctx = useCareContext()
   const [nickname, setNickname] = useState(plant.nickname)
-  const [where, setWhere] = useState(plant.where)
   const [water, setWater] = useState(plant.waterEveryDays ? String(plant.waterEveryDays) : '')
   const [feed, setFeed] = useState(plant.feedEveryDays ? String(plant.feedEveryDays) : '')
   const [style, setStyle] = useState(plant.style ?? '')
@@ -369,7 +371,6 @@ function EditSheet({ plant, open, onClose }: { plant: Plant; open: boolean; onCl
   const save = () => {
     useStore.getState().updatePlant(plant.id, {
       nickname: nickname.trim() || plant.nickname,
-      where,
       waterEveryDays: num(water, 1, 120),
       feedEveryDays: num(feed, 1, 365),
       style: style || undefined,
@@ -380,7 +381,7 @@ function EditSheet({ plant, open, onClose }: { plant: Plant; open: boolean; onCl
     onClose()
   }
 
-  const auto = waterInterval({ ...plant, where, waterEveryDays: undefined }, ctx)
+  const auto = waterInterval({ ...plant, waterEveryDays: undefined }, ctx)
 
   return (
     <Sheet open={open} onClose={onClose} title="Edit">
@@ -389,17 +390,6 @@ function EditSheet({ plant, open, onClose }: { plant: Plant; open: boolean; onCl
           <span>Nickname</span>
           <input value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={40} />
         </label>
-        <div>
-          <span className="label">Where does it live?</span>
-          <Segmented
-            value={where}
-            onChange={setWhere}
-            options={[
-              { value: 'outdoor', label: 'Outdoors' },
-              { value: 'indoor', label: 'Indoors' },
-            ]}
-          />
-        </div>
         <div className="two">
           <label>
             <span>Water every (days)</span>
@@ -410,7 +400,7 @@ function EditSheet({ plant, open, onClose }: { plant: Plant; open: boolean; onCl
             <input inputMode="numeric" value={feed} onChange={(e) => setFeed(e.target.value)} placeholder="Auto" />
           </label>
         </div>
-        <p className="muted small">Leave blank for automatic: the species’ seasonal schedule, shortened on hot days for outdoor plants.</p>
+        <p className="muted small">Leave blank for automatic: the personal plan’s schedule (or the species’ seasonal one), following the weather.</p>
         {plant.bonsai && (
           <div className="two">
             <label>

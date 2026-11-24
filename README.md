@@ -6,6 +6,7 @@ A personal plant and bonsai care app for the phone. It runs as an installable we
 
 - **Scan** – point the camera at a plant or bonsai to identify it and get a full care sheet.
 - **Care sheets** – watering (adjusted for your location, season and today's heat), temperature, sunlight, fertilizer, soil mix and pH, humidity, pruning, propagation, common problems, toxicity and precautions.
+- **Personal care plan** – describe where each plant lives (window direction and distance, air conditioning, sun exposure, pot) and Claude writes a plan for exactly those conditions: water volume and timing, placement, AC and light advice, feeding, this month's jobs. Its watering schedule follows the live forecast and the plan rewrites itself when the season, location or spot changes.
 - **Plants** – your collection, a built-in library of 26 common plants, and name look-up for anything else.
 - **Bonsai** – your trees with watering, feeding, wiring and repotting reminders; 16 species guides with seasonal calendars; 10 styles and 8 technique guides; photo-based styling advice.
 - **Today** – what needs doing now, one tap to tick it off, snooze, undo.

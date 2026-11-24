@@ -1,6 +1,6 @@
 import { Bug, Droplets, FlaskConical, Layers, MapPin, Scissors, ShieldAlert, Sprout, Sun, Thermometer, TreePine, Waves, Wind, CalendarDays, Cable, Shovel, Flame } from 'lucide-react'
 import { BONSAI_STYLES } from '../data/bonsai'
-import { adjustedInterval, type CareContext } from '../lib/care'
+import { adjustedInterval, drivingHigh, type CareContext } from '../lib/care'
 import { useCareContext } from '../lib/hooks'
 import { navigate } from '../lib/router'
 import { useStore } from '../lib/store'
@@ -10,12 +10,32 @@ import { Callout, Chip, MixChart, RangeBar, Section } from './ui'
 
 const SEASONS: Season[] = ['spring', 'summer', 'autumn', 'winter']
 
-function WateringBlock({ intervalDays, where, ctx }: { intervalDays: Record<Season, number>; where: 'indoor' | 'outdoor'; ctx: CareContext }) {
+function SeasonGrid({ intervalDays, season }: { intervalDays: Record<Season, number>; season: Season }) {
+  return (
+    <div className="season-grid">
+      {SEASONS.map((s) => (
+        <div key={s} className={`season-cell ${s === season ? 'current' : ''}`}>
+          <span>{cap(s)}</span>
+          <b>{intervalDays[s]}d</b>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function WateringBlock({ intervalDays, where, ctx, planned }: { intervalDays: Record<Season, number>; where: 'indoor' | 'outdoor'; ctx: CareContext; planned?: boolean }) {
   const place = useStore((s) => s.settings.place)
   const units = useStore((s) => s.settings.units)
   const base = intervalDays[ctx.season]
   const now = adjustedInterval(base, where, ctx)
   const adjusted = now !== base
+  if (planned)
+    return (
+      <>
+        <p className="muted small">Typical for the species, by season. Your personal plan above sets this plant’s actual schedule.</p>
+        <SeasonGrid intervalDays={intervalDays} season={ctx.season} />
+      </>
+    )
   return (
     <>
       <div className="where-row">
@@ -37,16 +57,9 @@ function WateringBlock({ intervalDays, where, ctx }: { intervalDays: Record<Seas
       <div className="big-fact">{everyLabel(now)}</div>
       <p className="muted small">
         About every {now} {now === 1 ? 'day' : 'days'}
-        {adjusted && ctx.weather ? ` — shortened from ${base} because today reaches ${temp(ctx.weather.maxC, units)}.` : '.'} Check the soil first; this is a starting point.
+        {adjusted && ctx.weather ? ` — adjusted from ${base} for highs around ${temp(drivingHigh(ctx.weather) ?? ctx.weather.maxC, units)}.` : '.'} Check the soil first; this is a starting point.
       </p>
-      <div className="season-grid">
-        {SEASONS.map((s) => (
-          <div key={s} className={`season-cell ${s === ctx.season ? 'current' : ''}`}>
-            <span>{cap(s)}</span>
-            <b>{intervalDays[s]}d</b>
-          </div>
-        ))}
-      </div>
+      <SeasonGrid intervalDays={intervalDays} season={ctx.season} />
     </>
   )
 }
@@ -82,13 +95,13 @@ function TempBlock({ idealMinC, idealMaxC, hardinessMinC }: { idealMinC: number;
   )
 }
 
-export function CareSheet({ profile, where }: { profile: CareProfile; where: 'indoor' | 'outdoor' }) {
+export function CareSheet({ profile, where, planned }: { profile: CareProfile; where: 'indoor' | 'outdoor'; planned?: boolean }) {
   const ctx = useCareContext()
   const p = profile
   return (
     <div className="sheet-stack">
       <Section icon={<Droplets />} title="Watering" hint={p.watering.summary}>
-        <WateringBlock intervalDays={p.watering.intervalDays} where={where} ctx={ctx} />
+        <WateringBlock intervalDays={p.watering.intervalDays} where={where} ctx={ctx} planned={planned} />
         <p>{p.watering.detail}</p>
       </Section>
 
@@ -185,7 +198,7 @@ export function CareSheet({ profile, where }: { profile: CareProfile; where: 'in
   )
 }
 
-export function BonsaiSheet({ profile, where }: { profile: BonsaiProfile; where: 'indoor' | 'outdoor' }) {
+export function BonsaiSheet({ profile, where, planned }: { profile: BonsaiProfile; where: 'indoor' | 'outdoor'; planned?: boolean }) {
   const ctx = useCareContext()
   const p = profile
   const styles = BONSAI_STYLES.filter((s) => p.styles.includes(s.id))
@@ -212,7 +225,7 @@ export function BonsaiSheet({ profile, where }: { profile: BonsaiProfile; where:
       </Section>
 
       <Section icon={<Droplets />} title="Watering" hint="Never on a fixed timetable">
-        <WateringBlock intervalDays={p.watering.intervalDays} where={where} ctx={ctx} />
+        <WateringBlock intervalDays={p.watering.intervalDays} where={where} ctx={ctx} planned={planned} />
         <p>{p.watering.detail}</p>
       </Section>
 

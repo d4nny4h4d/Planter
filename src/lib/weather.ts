@@ -3,7 +3,7 @@ import type { Place, Weather } from './types'
 export async function fetchWeather(place: Place): Promise<Weather> {
   const url =
     `https://api.open-meteo.com/v1/forecast?latitude=${place.lat}&longitude=${place.lon}` +
-    `&current=temperature_2m,relative_humidity_2m&daily=temperature_2m_max&forecast_days=1&timezone=auto`
+    `&current=temperature_2m,relative_humidity_2m&daily=temperature_2m_max,temperature_2m_min&forecast_days=7&timezone=auto`
   const res = await fetch(url)
   if (!res.ok) throw new Error('Weather service unavailable')
   const j = await res.json()
@@ -11,6 +11,8 @@ export async function fetchWeather(place: Place): Promise<Weather> {
     tempC: j.current.temperature_2m,
     maxC: j.daily?.temperature_2m_max?.[0] ?? j.current.temperature_2m,
     humidity: j.current.relative_humidity_2m,
+    highs: j.daily?.temperature_2m_max,
+    lows: j.daily?.temperature_2m_min,
     fetchedAt: Date.now(),
   }
 }

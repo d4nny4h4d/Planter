@@ -182,6 +182,47 @@ export interface PlantPhoto {
   at: number
 }
 
+/** The grower's description of where one plant actually lives. */
+export interface Spot {
+  potCm?: number
+  pot?: string
+  /** Indoor */
+  windowFacing?: string
+  windowDistance?: string
+  ac?: string
+  acTempC?: number
+  nearVent?: boolean
+  /** Outdoor */
+  exposure?: string
+  shelter?: string
+  notes?: string
+}
+
+export type HeatBand = 'cool' | 'mild' | 'hot' | 'extreme'
+
+/** Care plan written by Claude for one plant in its spot, climate and season. */
+export interface CarePlan {
+  createdAt: number
+  /** What the plan was written for; used to tell when it has gone stale */
+  basis: { season: Season; place: string; spotKey: string }
+  headline: string
+  watering: {
+    /** Days between waterings by outdoor daily high: cool <20°C, mild 20–29, hot 30–37, extreme 38+ */
+    everyDays: Record<HeatBand, number>
+    amount: string
+    method: string
+    bestTime: string
+    why: string
+  }
+  placement: { verdict: 'ideal' | 'workable' | 'move it'; advice: string }
+  light: string
+  climate: string
+  humidity: string
+  feeding: { everyWeeks: number; advice: string }
+  thisMonth: string[]
+  watchFor: string[]
+}
+
 export interface Plant {
   id: string
   kind: 'plant' | 'bonsai'
@@ -195,6 +236,8 @@ export interface Plant {
   photos: PlantPhoto[]
   log: CareEvent[]
   notes: string
+  spot?: Spot
+  plan?: CarePlan
   /** User overrides, in days. Unset = derive from profile + season + weather */
   waterEveryDays?: number
   feedEveryDays?: number
@@ -216,6 +259,9 @@ export interface Weather {
   /** Today's forecast high — drives watering adjustments */
   maxC: number
   humidity: number
+  /** Forecast highs and lows for the coming week, today first */
+  highs?: number[]
+  lows?: number[]
   fetchedAt: number
 }
 

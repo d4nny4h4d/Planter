@@ -1718,3 +1718,75 @@ svg {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---------- personal plan ---------- */
+
+.plan {
+  border-color: color-mix(in srgb, var(--green) 45%, var(--line));
+}
+.plan-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 8px 14px 16px;
+}
+.plan-body {
+  padding: 14px 16px 18px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.plan-row {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 10px;
+}
+.plan-row > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.plan-row h4 {
+  margin: 4px 0 0;
+}
+.plan-row .chip {
+  align-self: flex-start;
+}
+.plan-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: var(--green-soft);
+  color: var(--green);
+  display: grid;
+  place-items: center;
+}
+.plan-icon svg {
+  width: 18px;
+  height: 18px;
+}
+.plan .season-cell span {
+  font-size: 11px;
+  line-height: 1.25;
+}
+.plan-facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 12px;
+  font-size: 15px;
+}
+.plan-facts dt {
+  font-weight: 700;
+  color: var(--ink-2);
+  font-size: 13px;
+  padding-top: 2px;
+}
+.plan-facts dd {
+  margin: 0;
+}
+.plan-busy {
+  display: flex;
+}
