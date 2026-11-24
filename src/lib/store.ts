@@ -1,7 +1,7 @@
 import { get, set } from 'idb-keyval'
 import { create } from 'zustand'
 import { deletePhoto } from './image'
-import type { BonsaiProfile, CareAction, CareEvent, CareProfile, Plant, Settings, Weather } from './types'
+import type { BonsaiProfile, CareAction, CareEvent, CareProfile, DoctorReport, Plant, Settings, Weather } from './types'
 import { uid } from './util'
 
 const KEY = 'planter-state-v1'
@@ -21,11 +21,16 @@ export interface Draft {
 
 interface Persisted {
   plants: Plant[]
+  reports?: DoctorReport[]
   settings: Settings
   weather?: Weather
 }
 
 interface State extends Persisted {
+  reports: DoctorReport[]
+  addReport: (r: DoctorReport) => void
+  updateReport: (id: string, patch: Partial<DoctorReport>) => void
+  removeReport: (id: string) => void
   ready: boolean
   /** Saved data could not be read; nothing is written until a retry succeeds */
   loadFailed: boolean
@@ -48,8 +53,9 @@ interface State extends Persisted {
 
 export const DEFAULT_MODEL = 'claude-opus-5-5'
 
-const defaults: Persisted = {
+const defaults: Persisted & { reports: DoctorReport[] } = {
   plants: [],
+  reports: [],
   settings: { apiKey: '', model: DEFAULT_MODEL, units: 'C' },
 }
 
@@ -63,7 +69,7 @@ export const useStore = create<State>((setState, getState) => ({
   hydrate: async () => {
     try {
       const saved = await get<Persisted>(KEY)
-      if (saved) setState({ plants: saved.plants ?? [], settings: { ...defaults.settings, ...saved.settings }, weather: saved.weather })
+      if (saved) setState({ plants: saved.plants ?? [], reports: saved.reports ?? [], settings: { ...defaults.settings, ...saved.settings }, weather: saved.weather })
       setState({ ready: true, loadFailed: false })
     } catch {
       // Never mark ready here: an empty state would overwrite the saved collection on the next change.
@@ -72,6 +78,13 @@ export const useStore = create<State>((setState, getState) => ({
   },
 
   setDraft: (draft) => setState({ draft }),
+
+  addReport: (r) => setState((s) => ({ reports: [r, ...s.reports] })),
+  updateReport: (id, patch) => setState((s) => ({ reports: s.reports.map((r) => (r.id === id ? { ...r, ...patch } : r)) })),
+  removeReport: (id) => {
+    getState().reports.find((r) => r.id === id)?.photoIds.forEach((ph) => void deletePhoto(ph))
+    setState((s) => ({ reports: s.reports.filter((r) => r.id !== id) }))
+  },
 
   addPlant: ({ photoId, ...p }) => {
     const id = uid()
@@ -113,20 +126,20 @@ export const useStore = create<State>((setState, getState) => ({
   showToast: (text, undo) => setState({ toast: { id: Date.now(), text, undo } }),
   clearToast: () => setState({ toast: undefined }),
 
-  replaceAll: (data) => setState({ plants: data.plants ?? [], settings: { ...defaults.settings, ...data.settings }, weather: data.weather }),
+  replaceAll: (data) => setState({ plants: data.plants ?? [], reports: data.reports ?? [], settings: { ...defaults.settings, ...data.settings }, weather: data.weather }),
 }))
 
 let timer: ReturnType<typeof setTimeout> | undefined
 function persist() {
-  const { plants, settings, weather, ready } = useStore.getState()
+  const { plants, reports, settings, weather, ready } = useStore.getState()
   if (!ready) return
-  set(KEY, { plants, settings, weather } satisfies Persisted).catch(() =>
+  set(KEY, { plants, reports, settings, weather } satisfies Persisted).catch(() =>
     useStore.getState().showToast('Could not save. Device storage may be full.'),
   )
 }
 
 useStore.subscribe((s, prev) => {
-  if (s.plants === prev.plants && s.settings === prev.settings && s.weather === prev.weather) return
+  if (s.plants === prev.plants && s.reports === prev.reports && s.settings === prev.settings && s.weather === prev.weather) return
   clearTimeout(timer)
   timer = setTimeout(persist, 250)
 })

@@ -1,4 +1,4 @@
-import { CloudSun, MapPin, ScanLine } from 'lucide-react'
+import { CloudSun, MapPin, ScanLine, Settings as Cog, Stethoscope } from 'lucide-react'
 import { useMemo } from 'react'
 import { TaskRow } from '../components/TaskRow'
 import { Empty, Screen } from '../components/ui'
@@ -6,7 +6,7 @@ import { tasksFor, type Task } from '../lib/care'
 import { useCareContext } from '../lib/hooks'
 import { navigate } from '../lib/router'
 import { useStore } from '../lib/store'
-import { cap, temp } from '../lib/util'
+import { cap, DAY, daysFromToday, temp } from '../lib/util'
 
 function greeting() {
   const h = new Date().getHours()
@@ -16,6 +16,7 @@ function greeting() {
 export function Today() {
   const plants = useStore((s) => s.plants)
   const settings = useStore((s) => s.settings)
+  const reports = useStore((s) => s.reports)
   const ctx = useCareContext()
 
   const { overdue, today, soon } = useMemo(() => {
@@ -26,6 +27,14 @@ export function Today() {
       soon: all.filter((t) => t.inDays > 0 && t.inDays <= 7),
     }
   }, [plants, ctx])
+
+  // Check-ups whose follow-up date has arrived and that have not been superseded or marked recovered.
+  const followUps = useMemo(() => {
+    const latest = new Map<string, (typeof reports)[number]>()
+    for (const r of reports) if (r.plantId && (!latest.has(r.plantId) || latest.get(r.plantId)!.at < r.at)) latest.set(r.plantId, r)
+    return [...latest.values()].filter((r) => !r.resolved && r.recheckDays > 0 && daysFromToday(r.at + r.recheckDays * DAY) <= 0 && plants.some((p) => p.id === r.plantId))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reports, plants, ctx.day])
 
   const byId = useMemo(() => new Map(plants.map((p) => [p.id, p])), [plants])
   const dueNow = overdue.length + today.length
@@ -49,6 +58,9 @@ export function Today() {
   return (
     <Screen id="/" tab>
       <header className="hero-head">
+        <button className="icon-btn hero-gear" aria-label="Settings" onClick={() => navigate('/settings')}>
+          <Cog />
+        </button>
         <p className="eyebrow">{new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}</p>
         <h1>{greeting()}</h1>
         <button className="weather-pill" onClick={() => navigate('/settings')}>
@@ -105,6 +117,27 @@ export function Today() {
             <div className="callout callout-warn">
               <b>Heat alert:</b> {temp(ctx.weather!.maxC, settings.units)} today. Outdoor pots dry fast, so watering intervals are shortened. Water early morning or after sunset.
             </div>
+          )}
+
+          {followUps.length > 0 && (
+            <section className="group">
+              <h2 className="group-title">
+                Dr. Plant follow-ups <span>{followUps.length}</span>
+              </h2>
+              <div className="card list">
+                {followUps.map((r) => (
+                  <button key={r.id} className="row" onClick={() => navigate(`/doctor?plant=${r.plantId}`)}>
+                    <span className="avatar avatar-sm doc">
+                      <Stethoscope size={22} />
+                    </span>
+                    <span className="row-text">
+                      <b>Re-check {r.plantName}</b>
+                      <span className="muted small">{r.headline}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
           )}
 
           {group('Overdue', overdue)}

@@ -5,7 +5,7 @@ import { BONSAI_STYLES } from '../data/bonsai'
 import { seasonFor, spotKey } from './care'
 import { base64Of } from './image'
 import { useStore } from './store'
-import type { Advice, BonsaiProfile, CareProfile, CarePlan, Plant } from './types'
+import type { Advice, BonsaiProfile, CareProfile, CarePlan, DoctorReport, Plant } from './types'
 
 const seasons = z.object({ spring: z.number(), summer: z.number(), autumn: z.number(), winter: z.number() })
 const mix = z.array(z.object({ ingredient: z.string(), parts: z.number() }))
@@ -325,16 +325,6 @@ function describe(plant: Plant) {
   return `Plant: ${name}. Kept ${plant.where}s. ${recent.length ? `Recent care log:\n${recent.join('\n')}` : 'No care logged yet.'}${plant.notes ? `\nGrower's notes: ${plant.notes}` : ''}`
 }
 
-export function healthCheck(plant: Plant, photo: string): Promise<Advice> {
-  return ask(
-    advice,
-    `You are a plant pathologist and horticulturist reviewing a photo of a grower's plant for a personal plant-care app. Look for pests, disease, nutrient problems, watering or light stress, and physical damage. Report only what the photo and care log support; if the plant looks healthy, say so plainly and return few or no findings. For each finding give what you see, the most likely cause, and one concrete action. Severity: "act" needs action this week, "watch" is worth monitoring, "info" is a neutral observation. "headline" is at most six words.
-
-${situation()}`,
-    [image(photo), { type: 'text', text: describe(plant) }],
-  )
-}
-
 export function stylingAdvice(plant: Plant, photo: string): Promise<Advice> {
   return ask(
     advice,
@@ -407,4 +397,73 @@ ${situation()}`,
     createdAt: Date.now(),
     basis: { season: seasonFor(new Date(), settings.place?.lat), place: settings.place?.name ?? '', spotKey: spotKey(plant.where, plant.spot) },
   }
+}
+
+const doctorReport = z.object({
+  isPlant: z.boolean(),
+  identifiedAs: z.string(),
+  status: z.enum(['healthy', 'minor', 'needs treatment', 'critical']),
+  headline: z.string(),
+  summary: z.string(),
+  diagnoses: z.array(
+    z.object({
+      name: z.string(),
+      category: z.enum(['pest', 'fungal', 'bacterial', 'viral', 'nutrient', 'watering', 'light', 'environment', 'physical']),
+      likelihood: z.enum(['likely', 'possible', 'unlikely']),
+      evidence: z.string(),
+      cause: z.string(),
+    }),
+  ),
+  treatment: z.object({ now: z.array(z.string()), thisWeek: z.array(z.string()), ongoing: z.array(z.string()) }),
+  products: z.array(z.string()),
+  contagion: z.string(),
+  prevention: z.array(z.string()),
+  recovery: z.string(),
+  recheckDays: z.number(),
+})
+
+export type DoctorFindings = Omit<DoctorReport, 'id' | 'at' | 'plantId' | 'plantName' | 'photoIds' | 'symptoms' | 'notes' | 'resolved'> & { identifiedAs: string }
+
+/** Dr. Plant: diagnose from one or more photos, plus whatever the grower has noticed. */
+export async function diagnose(
+  input: { photos: string[]; plant?: Plant; symptoms: string[]; notes: string },
+  signal?: AbortSignal,
+): Promise<DoctorFindings> {
+  const { plant, photos, symptoms, notes } = input
+  const known = plant
+    ? `${describe(plant)}\nWhere it lives: ${describeSpot(plant)}\nSpecies care sheet:\n${JSON.stringify(plant.profile ?? plant.bonsai)}`
+    : 'The plant is not in the grower\'s collection; identify it from the photos as far as you can.'
+  const r = await ask(
+    doctorReport,
+    `You are a plant pathologist and horticulturist examining photos of a sick or worrying plant for the "Dr. Plant" section of a personal plant-care app. Work like a clinician: look at every photo, name what you see, weigh the possible causes, then prescribe.
+
+Consider pests, fungal, bacterial and viral disease, nutrient deficiency or excess, over- and under-watering, light, heat, cold, air-conditioning draughts, salt build-up from hard or desalinated water, and physical damage. Abiotic causes (watering, light, heat, salts) are far more common than disease; do not reach for a pathogen when culture explains the symptoms. Use the care log, the spot and the climate to decide between causes that look alike.
+
+Fields:
+- isPlant: false if the photos show no plant (then keep the other fields minimal).
+- identifiedAs: the species, or your best identification with its uncertainty.
+- status: healthy, minor (cosmetic or easily corrected), needs treatment, or critical (the plant may die without prompt action).
+- headline: at most eight words. summary: two or three sentences in plain language on what is wrong and whether it is recoverable.
+- diagnoses: up to four, most likely first. evidence = exactly what in the photos or history points to it; cause = why it happened here. If the plant looks healthy, return an empty list.
+- treatment.now: what to do today, in order. treatment.thisWeek: follow-up within seven days. treatment.ongoing: the routine to keep until it recovers. Each step is one concrete action with quantities, dilutions, intervals and how many repeat applications (for example "Spray all leaf surfaces, undersides included, with neem oil at 5 ml per litre plus a few drops of dish soap, at dusk, every 7 days for 3 rounds").
+- products: generic names of anything to buy (active ingredient or product type, not brands). Prefer the least toxic effective option first and note when a stronger one is justified. Flag anything unsafe around pets or children.
+- contagion: whether it can spread to other plants and whether to isolate this one, in one or two sentences.
+- prevention: two to four habits that stop it coming back, specific to this plant's situation.
+- recovery: what improvement to expect and by when; say that damaged leaves will not heal if that is the case, and when the plant is beyond saving.
+- recheckDays: days until the grower should photograph it again (0 if healthy).
+
+Be honest about uncertainty and about what cannot be judged from photos; say which extra photo or check (roots, soil moisture at depth, leaf undersides) would settle it. Metric units and °C.
+
+${situation()}`,
+    [
+      ...photos.map(image),
+      {
+        type: 'text',
+        text: `${known}\n\nSymptoms the grower ticked: ${symptoms.length ? symptoms.join(', ') : 'none'}.\nGrower's description: ${notes || 'none given'}`,
+      },
+    ],
+    signal,
+  )
+  if (!r.isPlant) throw new AiError('No plant could be made out in those photos. Take a clear, close photo of the affected part and try again.')
+  return { ...r, recheckDays: Math.min(60, Math.max(0, Math.round(r.recheckDays) || 0)) }
 }

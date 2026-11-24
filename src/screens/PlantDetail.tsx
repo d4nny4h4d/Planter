@@ -133,11 +133,11 @@ export function PlantDetail({ id }: { id: string }) {
         )}
 
         <div className="ai-row">
-          <button className="btn" onClick={() => navigate(`/advice/${plant.id}?mode=health`)}>
-            <HeartPulse /> Health check
+          <button className="btn" onClick={() => navigate(`/doctor?plant=${plant.id}`)}>
+            <HeartPulse /> Dr. Plant
           </button>
           {plant.bonsai && (
-            <button className="btn" onClick={() => navigate(`/advice/${plant.id}?mode=styling`)}>
+            <button className="btn" onClick={() => navigate(`/advice/${plant.id}`)}>
               <Sparkles /> Styling advice
             </button>
           )}

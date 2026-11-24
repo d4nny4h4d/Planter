@@ -1,4 +1,4 @@
-import { Home, Leaf, ScanLine, Settings as Cog, TreePine } from 'lucide-react'
+import { Home, Leaf, ScanLine, Stethoscope, TreePine } from 'lucide-react'
 import { useEffect } from 'react'
 import { Toast } from './components/ui'
 import { navigate, useRoute } from './lib/router'
@@ -6,6 +6,7 @@ import { useStore } from './lib/store'
 import { fetchWeather } from './lib/weather'
 import { Advice } from './screens/Advice'
 import { Bonsai } from './screens/Bonsai'
+import { Doctor, Report } from './screens/Doctor'
 import { StyleGuide, TechniqueGuide } from './screens/Guides'
 import { PlantDetail } from './screens/PlantDetail'
 import { Plants } from './screens/Plants'
@@ -18,7 +19,7 @@ const TABS = [
   { path: '/', label: 'Today', icon: Home },
   { path: '/plants', label: 'Plants', icon: Leaf },
   { path: '/bonsai', label: 'Bonsai', icon: TreePine },
-  { path: '/settings', label: 'Settings', icon: Cog },
+  { path: '/doctor', label: 'Dr. Plant', icon: Stethoscope },
 ]
 
 function useWeatherRefresh() {
@@ -66,10 +67,12 @@ export default function App() {
   else if (a === 'plants') screen = <Plants />
   else if (a === 'bonsai') screen = <Bonsai view={route.query.get('view')} />
   else if (a === 'settings') screen = <Settings />
+  else if (a === 'doctor') screen = <Doctor plantId={route.query.get('plant')} />
+  else if (a === 'report' && b) screen = <Report id={b} />
   else if (a === 'scan') screen = <Scan initialMode={route.query.get('mode') === 'bonsai' ? 'bonsai' : 'plant'} />
   else if (a === 'result') screen = <Result />
   else if (a === 'plant' && b) screen = <PlantDetail key={b} id={b} />
-  else if (a === 'advice' && b) screen = <Advice id={b} mode={route.query.get('mode') === 'styling' ? 'styling' : 'health'} />
+  else if (a === 'advice' && b) screen = <Advice id={b} />
   else if (a === 'style' && b) screen = <StyleGuide id={b} />
   else if (a === 'technique' && b) screen = <TechniqueGuide id={b} />
   else screen = <Today />

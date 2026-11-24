@@ -1,7 +1,7 @@
 import { Camera, NotebookPen } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { Chip, Empty, Screen, TopBar } from '../components/ui'
-import { AiError, healthCheck, stylingAdvice } from '../lib/ai'
+import { AiError, stylingAdvice } from '../lib/ai'
 import { fileToDataUrl } from '../lib/image'
 import { back, navigate } from '../lib/router'
 import { useStore } from '../lib/store'
@@ -9,7 +9,7 @@ import type { Advice as AdviceResult } from '../lib/types'
 
 const SEVERITY = { act: ['Act now', 'bad'], watch: ['Keep an eye on', 'warn'], info: ['Note', 'plain'] } as const
 
-export function Advice({ id, mode }: { id: string; mode: 'health' | 'styling' }) {
+export function Advice({ id }: { id: string }) {
   const plant = useStore((s) => s.plants.find((p) => p.id === id))
   const logCare = useStore((s) => s.logCare)
   const showToast = useStore((s) => s.showToast)
@@ -22,7 +22,7 @@ export function Advice({ id, mode }: { id: string; mode: 'health' | 'styling' })
 
   if (!plant) return <Screen id="advice"><TopBar /><Empty emoji="🍂" title="Plant not found" /></Screen>
 
-  const title = mode === 'health' ? 'Health check' : 'Styling advice'
+  const title = 'Styling advice'
 
   const run = async (img: string) => {
     setBusy(true)
@@ -30,7 +30,7 @@ export function Advice({ id, mode }: { id: string; mode: 'health' | 'styling' })
     setResult(undefined)
     setSaved(false)
     try {
-      setResult(await (mode === 'health' ? healthCheck(plant, img) : stylingAdvice(plant, img)))
+      setResult(await stylingAdvice(plant, img))
     } catch (e) {
       setError(e instanceof AiError ? e : new AiError('Something went wrong. Please try again.'))
     } finally {
@@ -55,9 +55,7 @@ export function Advice({ id, mode }: { id: string; mode: 'health' | 'styling' })
       <div className="guide">
         <h1>{plant.nickname}</h1>
         <p className="muted">
-          {mode === 'health'
-            ? 'Take a clear, close photo of the part that worries you: a damaged leaf, a spot, a pest, or the whole plant if it is drooping.'
-            : 'Photograph the tree from its front at trunk height, against a plain background if you can.'}
+          Photograph the tree from its front at trunk height, against a plain background if you can.
         </p>
 
         {photo && <img className="advice-photo" src={photo} alt="" />}
@@ -80,7 +78,7 @@ export function Advice({ id, mode }: { id: string; mode: 'health' | 'styling' })
           <div className="card pad busy-row" role="status">
             <span className="spinner" />
             <div>
-              <b>{mode === 'health' ? 'Examining the photo…' : 'Studying the tree…'}</b>
+              <b>Studying the tree…</b>
               <p className="muted small">This usually takes 15–30 seconds.</p>
             </div>
           </div>
@@ -127,7 +125,7 @@ export function Advice({ id, mode }: { id: string; mode: 'health' | 'styling' })
               <NotebookPen /> {saved ? 'Saved to journal' : 'Save summary to journal'}
             </button>
             <button className="btn block" onClick={() => back()}>Done</button>
-            <p className="muted small center">A photo-based opinion, not a lab diagnosis.</p>
+            <p className="muted small center">An opinion from one photo; walk around the tree before cutting.</p>
           </>
         )}
       </div>

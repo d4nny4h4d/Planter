@@ -1790,3 +1790,150 @@ svg {
 .plan-busy {
   display: flex;
 }
+
+/* ---------- Dr. Plant ---------- */
+
+.hero-head {
+  position: relative;
+}
+.hero-gear {
+  position: absolute;
+  top: 2px;
+  right: -6px;
+  color: var(--ink-2);
+}
+.avatar.doc {
+  color: var(--green);
+}
+.shots {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.shot,
+.shot-add {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.shot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.shot button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: start end;
+  padding: 5px;
+}
+.shot button span {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.6);
+  color: #fff;
+  display: grid;
+  place-items: center;
+}
+.shot-add {
+  border: 2px dashed var(--line);
+  background: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: var(--green);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.shot-add.first {
+  grid-column: 1 / -1;
+  aspect-ratio: auto;
+  min-height: 132px;
+  font-size: 15px;
+  gap: 6px;
+  background: var(--surface);
+}
+.plant-pick {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  margin: 0 -16px;
+  padding: 2px 16px;
+  scrollbar-width: none;
+}
+.plant-pick::-webkit-scrollbar {
+  display: none;
+}
+.plant-pick .chip {
+  flex: none;
+  min-height: 44px;
+  padding: 0 16px;
+  font-size: 14.5px;
+}
+.status {
+  padding: 16px;
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.status h2 {
+  font: 600 24px/1.2 'Fraunces Variable', Georgia, serif;
+}
+.status-healthy {
+  background: var(--green-soft);
+}
+.status-minor {
+  background: var(--warn-soft);
+}
+.status-needs,
+.status-critical {
+  background: var(--bad-soft);
+}
+.status .eyebrow {
+  color: inherit;
+  opacity: 0.75;
+}
+.dx {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+}
+.dx-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.dx-head h4 {
+  margin: 0;
+  font-size: 16.5px;
+}
+.rx h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.report-photos {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  margin: 0 -16px;
+  padding: 0 16px;
+  scrollbar-width: none;
+}
+.report-photos img {
+  height: 168px;
+  border-radius: 16px;
+  flex: none;
+}

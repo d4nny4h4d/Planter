@@ -284,3 +284,37 @@ export interface Advice {
   summary: string
   findings: Finding[]
 }
+
+export type DiagnosisCategory = 'pest' | 'fungal' | 'bacterial' | 'viral' | 'nutrient' | 'watering' | 'light' | 'environment' | 'physical'
+
+export interface Diagnosis {
+  name: string
+  category: DiagnosisCategory
+  likelihood: 'likely' | 'possible' | 'unlikely'
+  /** What in the photos points to it */
+  evidence: string
+  cause: string
+}
+
+/** One Dr. Plant check-up. */
+export interface DoctorReport {
+  id: string
+  at: number
+  plantId?: string
+  plantName: string
+  photoIds: string[]
+  symptoms: string[]
+  notes: string
+  status: 'healthy' | 'minor' | 'needs treatment' | 'critical'
+  headline: string
+  summary: string
+  diagnoses: Diagnosis[]
+  treatment: { now: string[]; thisWeek: string[]; ongoing: string[] }
+  products: string[]
+  contagion: string
+  prevention: string[]
+  recovery: string
+  /** Days until the plant should be looked at again; 0 = no follow-up needed */
+  recheckDays: number
+  resolved?: boolean
+}
