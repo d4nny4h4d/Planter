@@ -1,0 +1,38 @@
+# Planter
+
+A personal plant and bonsai care app for the phone. It runs as an installable web app (PWA): no app store, no account, and everything is stored on the device.
+
+## What it does
+
+- **Scan** – point the camera at a plant or bonsai to identify it and get a full care sheet.
+- **Care sheets** – watering (adjusted for your location, season and today's heat), temperature, sunlight, fertilizer, soil mix and pH, humidity, pruning, propagation, common problems, toxicity and precautions.
+- **Plants** – your collection, a built-in library of 26 common plants, and name look-up for anything else.
+- **Bonsai** – your trees with watering, feeding, wiring and repotting reminders; 16 species guides with seasonal calendars; 10 styles and 8 technique guides; photo-based styling advice.
+- **Today** – what needs doing now, one tap to tick it off, snooze, undo.
+- **Journal and photos** – a care log and growth timeline for every plant.
+- **Health check** – photograph a problem and get likely causes and what to do.
+- **Backup** – export and restore the whole collection, photos included, as one file.
+
+## Photo recognition
+
+Identification, name look-up, health checks and styling advice call the Claude API directly from the phone using your own API key (Settings → Photo recognition). The key is kept only on the device. The built-in libraries, schedules, journal and guides work without a key.
+
+Weather comes from Open-Meteo (no key needed) once a location is set.
+
+## Run it
+
+```sh
+npm install
+npm run dev      # development server
+npm run build    # production build in dist/
+npm run preview  # serve the production build
+```
+
+The camera needs HTTPS (or localhost).
+
+## Put it on your phone
+
+1. Host the `dist/` folder on any HTTPS static host. A GitHub Pages workflow is included: merge to `main`, then enable Pages under Settings → Pages → Source: GitHub Actions.
+2. Open the URL in Chrome on Android and choose **Add to Home screen** / **Install app**.
+
+It then opens full-screen like a native app and works offline, apart from recognition and weather.
