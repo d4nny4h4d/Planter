@@ -43,6 +43,20 @@ export default function App() {
   const ready = useStore((s) => s.ready)
   useWeatherRefresh()
 
+  const loadFailed = useStore((s) => s.loadFailed)
+  if (loadFailed)
+    return (
+      <div className="boot">
+        <div className="empty">
+          <div className="empty-emoji">🥀</div>
+          <h3>Could not open your collection</h3>
+          <p>Your saved plants are untouched. Close other tabs of this app and try again.</p>
+          <button className="btn primary" onClick={() => void useStore.getState().hydrate()}>
+            Try again
+          </button>
+        </div>
+      </div>
+    )
   if (!ready) return <div className="boot">🌿</div>
 
   const [a, b] = route.parts

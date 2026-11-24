@@ -20,10 +20,14 @@ export function Scan({ initialMode }: { initialMode: Mode }) {
   const stream = useRef<MediaStream>(null)
   const picker = useRef<HTMLInputElement>(null)
   const run = useRef(0)
+  const camRun = useRef(0)
+  const busy = useRef(false)
+  const abort = useRef<AbortController>(null)
   const hasKey = useStore((s) => !!s.settings.apiKey)
   const setDraft = useStore((s) => s.setDraft)
 
   const stop = useCallback(() => {
+    camRun.current++
     stream.current?.getTracks().forEach((t) => t.stop())
     stream.current = null
     setLive(false)
@@ -35,11 +39,18 @@ export function Scan({ initialMode }: { initialMode: Mode }) {
       setCamError('Live camera is not available here. Use the gallery button to take or choose a photo.')
       return
     }
+    const id = ++camRun.current
     try {
       const s = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
         audio: false,
       })
+      // The screen closed, or a photo was taken, while the camera was still starting: release it.
+      if (id !== camRun.current || busy.current) {
+        s.getTracks().forEach((t) => t.stop())
+        return
+      }
+      stream.current?.getTracks().forEach((t) => t.stop())
       stream.current = s
       if (video.current) {
         video.current.srcObject = s
@@ -49,6 +60,7 @@ export function Scan({ initialMode }: { initialMode: Mode }) {
       setTorch(caps?.torch ? false : null)
       setLive(true)
     } catch (e) {
+      if (id !== camRun.current) return
       const denied = e instanceof DOMException && e.name === 'NotAllowedError'
       setCamError(
         denied
@@ -60,11 +72,15 @@ export function Scan({ initialMode }: { initialMode: Mode }) {
 
   useEffect(() => {
     void start()
-    const onVis = () => (document.visibilityState === 'hidden' ? stop() : !stream.current && void start())
+    const onVis = () => {
+      if (document.visibilityState === 'hidden') stop()
+      else if (!stream.current && !busy.current) void start()
+    }
     document.addEventListener('visibilitychange', onVis)
     return () => {
       document.removeEventListener('visibilitychange', onVis)
       run.current++
+      abort.current?.abort()
       stop()
     }
   }, [start, stop])
@@ -78,16 +94,19 @@ export function Scan({ initialMode }: { initialMode: Mode }) {
 
   const analyse = async (photo: string) => {
     const id = ++run.current
+    busy.current = true
     setShot(photo)
     setError(undefined)
     stop()
+    abort.current?.abort()
+    const ctl = (abort.current = new AbortController())
     try {
       if (mode === 'plant') {
-        const r = await identifyPlant(photo)
+        const r = await identifyPlant(photo, ctl.signal)
         if (id !== run.current) return
         setDraft({ kind: 'plant', photo, profile: r.profile, confidence: r.confidence, reasoning: r.reasoning, alternatives: r.alternatives, emoji: r.emoji })
       } else {
-        const r = await identifyBonsai(photo)
+        const r = await identifyBonsai(photo, ctl.signal)
         if (id !== run.current) return
         setDraft({ kind: 'bonsai', photo, bonsai: r.profile, confidence: r.confidence, reasoning: r.reasoning, alternatives: r.alternatives, emoji: r.emoji, suggestedStyle: r.suggestedStyle })
       }
@@ -127,6 +146,8 @@ export function Scan({ initialMode }: { initialMode: Mode }) {
 
   const retake = () => {
     run.current++
+    abort.current?.abort()
+    busy.current = false
     setShot(undefined)
     setError(undefined)
     void start()
@@ -210,7 +231,7 @@ export function Scan({ initialMode }: { initialMode: Mode }) {
               <b>Identifying…</b>
               <p>{STEPS[step]}</p>
             </div>
-            <button className="link light" onClick={retake}>
+            <button className="link light tap" onClick={retake}>
               Cancel
             </button>
           </div>

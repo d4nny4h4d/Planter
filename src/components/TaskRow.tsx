@@ -43,7 +43,7 @@ export function TaskRow({ task, plant, showPlant = true }: { task: Task; plant: 
       <button className="icon-btn" aria-label="More options" onClick={() => setMenu(true)}>
         <MoreHorizontal />
       </button>
-      <button className="task-done" aria-label={`Mark ${task.label} done for ${plant.nickname}`} onClick={() => completeTask(task, plant)}>
+      <button className="task-done" aria-label={`Mark ${task.label} done for ${plant.nickname}`} onClick={() => (task.check ? setMenu(true) : completeTask(task, plant))}>
         <Check />
       </button>
       <Sheet open={menu} onClose={() => setMenu(false)} title={`${task.label} · ${plant.nickname}`}>
@@ -55,10 +55,16 @@ export function TaskRow({ task, plant, showPlant = true }: { task: Task; plant: 
               completeTask(task, plant)
             }}
           >
-            Mark as done
+            {task.check ? 'Wire removed' : 'Mark as done'}
           </button>
-          <button onClick={() => doSnooze(1)}>Snooze until tomorrow</button>
-          <button onClick={() => doSnooze(3)}>Snooze 3 days</button>
+          {task.check ? (
+            <button onClick={() => doSnooze(14)}>Still fine, check again in 2 weeks</button>
+          ) : (
+            <>
+              <button onClick={() => doSnooze(1)}>Snooze until tomorrow</button>
+              <button onClick={() => doSnooze(3)}>Snooze 3 days</button>
+            </>
+          )}
           <button onClick={() => doSnooze(7)}>Snooze a week</button>
         </div>
       </Sheet>

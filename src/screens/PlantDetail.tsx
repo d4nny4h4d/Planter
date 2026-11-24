@@ -26,6 +26,7 @@ export function PlantDetail({ id }: { id: string }) {
   const [menu, setMenu] = useState(false)
   const [logging, setLogging] = useState(false)
   const [editing, setEditing] = useState(false)
+  const [editRun, setEditRun] = useState(0)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const picker = useRef<HTMLInputElement>(null)
   const cover = usePhoto(plant?.photos.at(-1)?.id)
@@ -51,7 +52,8 @@ export function PlantDetail({ id }: { id: string }) {
     if (!file) return
     try {
       const photoId = await savePhoto(await fileToDataUrl(file))
-      updatePlant(plant.id, { photos: [...plant.photos, { id: photoId, at: Date.now() }] })
+      const current = useStore.getState().plants.find((x) => x.id === plant.id)
+      if (current) updatePlant(plant.id, { photos: [...current.photos, { id: photoId, at: Date.now() }] })
       showToast('Photo added')
     } catch {
       showToast('That photo could not be saved')
@@ -232,6 +234,7 @@ export function PlantDetail({ id }: { id: string }) {
           <button
             onClick={() => {
               setMenu(false)
+              setEditRun((n) => n + 1)
               setEditing(true)
             }}
           >
@@ -255,9 +258,13 @@ export function PlantDetail({ id }: { id: string }) {
           <button
             className="btn danger block"
             onClick={() => {
-              removePlant(plant.id)
-              showToast(`${plant.nickname} deleted`)
-              back(plant.kind === 'bonsai' ? '/bonsai' : '/plants')
+              // Let the sheet give up its history entry first, then leave the page, then delete.
+              setConfirmDelete(false)
+              setTimeout(() => back(plant.kind === 'bonsai' ? '/bonsai' : '/plants'), 80)
+              setTimeout(() => {
+                removePlant(plant.id)
+                showToast(`${plant.nickname} deleted`)
+              }, 380)
             }}
           >
             Delete
@@ -269,7 +276,7 @@ export function PlantDetail({ id }: { id: string }) {
       </Sheet>
 
       <LogSheet plant={plant} open={logging} onClose={() => setLogging(false)} />
-      <EditSheet key={String(editing)} plant={plant} open={editing} onClose={() => setEditing(false)} />
+      <EditSheet key={editRun} plant={plant} open={editing} onClose={() => setEditing(false)} />
     </Screen>
   )
 }

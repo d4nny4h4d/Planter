@@ -27,6 +27,8 @@ interface Persisted {
 
 interface State extends Persisted {
   ready: boolean
+  /** Saved data could not be read; nothing is written until a retry succeeds */
+  loadFailed: boolean
   draft?: Draft
   toast?: { id: number; text: string; undo?: () => void }
   hydrate: () => Promise<void>
@@ -56,13 +58,16 @@ const mapPlant = (plants: Plant[], id: string, fn: (p: Plant) => Plant) => plant
 export const useStore = create<State>((setState, getState) => ({
   ...defaults,
   ready: false,
+  loadFailed: false,
 
   hydrate: async () => {
     try {
       const saved = await get<Persisted>(KEY)
       if (saved) setState({ plants: saved.plants ?? [], settings: { ...defaults.settings, ...saved.settings }, weather: saved.weather })
-    } finally {
-      setState({ ready: true })
+      setState({ ready: true, loadFailed: false })
+    } catch {
+      // Never mark ready here: an empty state would overwrite the saved collection on the next change.
+      setState({ loadFailed: true })
     }
   },
 
@@ -115,7 +120,9 @@ let timer: ReturnType<typeof setTimeout> | undefined
 function persist() {
   const { plants, settings, weather, ready } = useStore.getState()
   if (!ready) return
-  void set(KEY, { plants, settings, weather } satisfies Persisted)
+  set(KEY, { plants, settings, weather } satisfies Persisted).catch(() =>
+    useStore.getState().showToast('Could not save. Device storage may be full.'),
+  )
 }
 
 useStore.subscribe((s, prev) => {

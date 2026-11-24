@@ -144,12 +144,29 @@ export function Sheet({ open, onClose, title, children }: { open: boolean; onClo
     const t = setTimeout(() => setMounted(false), 260)
     return () => clearTimeout(t)
   }, [open])
+  const close = useRef(onClose)
+  useEffect(() => {
+    close.current = onClose
+  })
   useEffect(() => {
     if (!open) return
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    // Give the sheet its own history entry so the phone's back button closes it instead of leaving the page.
+    const token = `${Date.now()}-${Math.random()}`
+    if (window.history.state?.sheet) window.history.replaceState({ sheet: token }, '')
+    else window.history.pushState({ sheet: token }, '')
+    const onPop = () => close.current()
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && close.current()
+    window.addEventListener('popstate', onPop)
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [open, onClose])
+    return () => {
+      window.removeEventListener('popstate', onPop)
+      window.removeEventListener('keydown', onKey)
+      // Deferred so a sheet opening in the same update can take over this entry instead.
+      setTimeout(() => {
+        if (window.history.state?.sheet === token) window.history.back()
+      }, 0)
+    }
+  }, [open])
   if (!mounted) return null
   return createPortal(
     <div className={`sheet-root ${shown ? 'shown' : ''}`}>

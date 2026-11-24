@@ -4,6 +4,8 @@ import { DAY, daysFromToday } from './util'
 export interface CareContext {
   season: Season
   weather?: Weather
+  /** Start-of-day timestamp; changes at midnight so due dates recompute */
+  day?: number
 }
 
 export function seasonFor(date = new Date(), lat = 25): Season {
@@ -42,7 +44,8 @@ export function waterInterval(plant: Plant, ctx: CareContext) {
 /** Days between feeds, or null when the plant should not be fed this season. */
 export function feedInterval(plant: Plant, ctx: CareContext) {
   if (plant.feedEveryDays) return plant.feedEveryDays
-  if (ctx.season === 'winter') return null
+  // Skip winter feeding, except where winters stay warm enough for growth (the Gulf's main growing season).
+  if (ctx.season === 'winter' && !(ctx.weather && ctx.weather.maxC >= 20)) return null
   const weeks = plant.profile?.fertilizer.intervalWeeks ?? plant.bonsai?.fertilizing.intervalWeeks
   return weeks ? Math.max(7, Math.round(weeks * 7)) : null
 }
@@ -55,6 +58,8 @@ export function lastEvent(plant: Plant, action: CareAction) {
 
 export interface Task {
   key: string
+  /** A reminder to inspect rather than a job that is simply done */
+  check?: boolean
   plantId: string
   /** What gets logged when the task is ticked off */
   action: CareAction
@@ -90,9 +95,9 @@ export const ACTION_PAST: Record<CareAction, string> = {
 
 export function tasksFor(plant: Plant, ctx: CareContext): Task[] {
   const out: Task[] = []
-  const push = (action: CareAction, label: string, dueAt: number) => {
+  const push = (action: CareAction, label: string, dueAt: number, check = false) => {
     const due = Math.max(dueAt, plant.snooze?.[action] ?? 0)
-    out.push({ key: `${plant.id}:${action}`, plantId: plant.id, action, label, dueAt: due, inDays: daysFromToday(due) })
+    out.push({ key: `${plant.id}:${action}`, plantId: plant.id, action, label, dueAt: due, inDays: daysFromToday(due), check })
   }
   const since = (action: CareAction) => lastEvent(plant, action)?.at ?? plant.addedAt
 
@@ -107,7 +112,7 @@ export function tasksFor(plant: Plant, ctx: CareContext): Task[] {
     const wired = lastEvent(plant, 'wire')
     const unwired = lastEvent(plant, 'unwire')
     if (wired && (!unwired || unwired.at < wired.at)) {
-      push('unwire', 'Check wire for biting in', wired.at + plant.bonsai.wiring.checkAfterWeeks * 7 * DAY)
+      push('unwire', 'Check wire for biting in', wired.at + plant.bonsai.wiring.checkAfterWeeks * 7 * DAY, true)
     }
     push('repot', 'Repot', since('repot') + plant.bonsai.repotting.everyYears * 365 * DAY)
   }

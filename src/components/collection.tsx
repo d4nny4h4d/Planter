@@ -1,5 +1,5 @@
 import { ChevronRight, Droplets, Search, Sparkles, X } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AiError, lookupBonsai, lookupPlant } from '../lib/ai'
 import { speciesName, tasksFor } from '../lib/care'
 import { useCareContext } from '../lib/hooks'
@@ -70,20 +70,25 @@ export function AiLookup({ kind, name }: { kind: 'plant' | 'bonsai'; name: strin
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<AiError>()
   const setDraft = useStore((s) => s.setDraft)
+  const abort = useRef<AbortController>(null)
+  useEffect(() => () => abort.current?.abort(), [])
 
   const run = async () => {
     setBusy(true)
     setError(undefined)
+    const ctl = (abort.current = new AbortController())
     try {
       if (kind === 'plant') {
-        const r = await lookupPlant(name)
+        const r = await lookupPlant(name, ctl.signal)
         setDraft({ kind, profile: r.profile, reasoning: r.reasoning, emoji: r.emoji })
       } else {
-        const r = await lookupBonsai(name)
+        const r = await lookupBonsai(name, ctl.signal)
         setDraft({ kind, bonsai: r.profile, reasoning: r.reasoning, emoji: r.emoji, suggestedStyle: r.suggestedStyle })
       }
+      if (ctl.signal.aborted) return
       navigate('/result')
     } catch (e) {
+      if (ctl.signal.aborted) return
       setError(e instanceof AiError ? e : new AiError('Something went wrong. Please try again.'))
     } finally {
       setBusy(false)
