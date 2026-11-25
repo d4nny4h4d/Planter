@@ -12,8 +12,8 @@ export default defineConfig({
       includeAssets: ['favicon.svg'],
       workbox: { globPatterns: ['**/*.{js,css,html,svg,png,woff2}'] },
       manifest: {
-        name: 'Planter',
-        short_name: 'Planter',
+        name: 'Treecko',
+        short_name: 'Treecko',
         description: 'Personal plant and bonsai care with camera identification',
         display: 'standalone',
         orientation: 'portrait',

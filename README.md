@@ -1,4 +1,4 @@
-# Planter
+# Treecko
 
 A personal plant and bonsai care app for the phone. It runs as an installable web app (PWA): no app store, no account, and everything is stored on the device.
 

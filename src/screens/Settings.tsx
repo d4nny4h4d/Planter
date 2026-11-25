@@ -70,7 +70,7 @@ export function Settings() {
       const blob = new Blob([JSON.stringify({ app: 'planter', version: 1, plants, reports, settings: { ...settings, apiKey: '' }, photos })], { type: 'application/json' })
       const a = document.createElement('a')
       a.href = URL.createObjectURL(blob)
-      a.download = `planter-backup-${new Date().toISOString().slice(0, 10)}.json`
+      a.download = `treecko-backup-${new Date().toISOString().slice(0, 10)}.json`
       a.click()
       setTimeout(() => URL.revokeObjectURL(a.href), 5000)
     } finally {
@@ -88,7 +88,7 @@ export function Settings() {
       replaceAll({ plants: data.plants, reports: Array.isArray(data.reports) ? data.reports : [], settings: { ...data.settings, apiKey: settings.apiKey }, weather })
       showToast(`Restored ${data.plants.length} plants`)
     } catch {
-      showToast('That file is not a Planter backup')
+      showToast('That file is not a Treecko backup')
     }
   }
 
@@ -204,7 +204,7 @@ export function Settings() {
         </div>
       </section>
 
-      <p className="muted small center">Planter · personal plant & bonsai care</p>
+      <p className="muted small center">Treecko · personal plant & bonsai care</p>
     </Screen>
   )
 }
