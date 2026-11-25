@@ -3,7 +3,7 @@ name: Deploy to GitHub Pages
 # Runs only once Pages is enabled for this repository (Settings → Pages → Source: GitHub Actions).
 on:
   push:
-    branches: [main]
+    branches: [main, claude/mobile-plant-care-app-mnts9y]
   workflow_dispatch:
 
 permissions:
