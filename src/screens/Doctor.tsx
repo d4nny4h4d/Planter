@@ -2,26 +2,12 @@ import { Camera, CalendarClock, ChevronRight, CircleCheck, ShieldAlert, Shopping
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Callout, Chip, Empty, Screen, Sheet, TopBar, usePhoto } from '../components/ui'
 import { AiError, diagnose } from '../lib/ai'
-import { fileToDataUrl, savePhoto } from '../lib/image'
+import { SYMPTOMS, saveReport } from '../lib/doctor'
+import { fileToDataUrl } from '../lib/image'
 import { back, navigate } from '../lib/router'
 import { useStore } from '../lib/store'
 import type { DoctorReport } from '../lib/types'
-import { cap, DAY, formatDate, relativeDay, uid } from '../lib/util'
-
-const SYMPTOMS = [
-  'Yellow leaves',
-  'Brown tips or edges',
-  'Spots on leaves',
-  'Wilting or drooping',
-  'Leaves dropping',
-  'White powder or fuzz',
-  'Sticky residue',
-  'Insects or webbing',
-  'Holes or chewed leaves',
-  'Soft or black stem',
-  'Mould on soil',
-  'No new growth',
-]
+import { cap, DAY, formatDate, relativeDay } from '../lib/util'
 
 const STATUS = {
   healthy: ['Looks healthy', 'good', 'status-healthy'],
@@ -68,26 +54,12 @@ export function Doctor({ plantId }: { plantId: string | null }) {
     try {
       const found = await diagnose({ photos, plant, symptoms, notes: notes.trim() }, ctl.signal)
       if (ctl.signal.aborted) return
-      const { identifiedAs, ...rest } = found
-      const photoIds = await Promise.all(photos.map(savePhoto))
-      const report: DoctorReport = {
-        ...rest,
-        id: uid(),
-        at: Date.now(),
-        plantId: plant?.id,
-        plantName: plant?.nickname ?? identifiedAs,
-        photoIds,
-        symptoms,
-        notes: notes.trim(),
-      }
-      const { addReport, logCare } = useStore.getState()
-      addReport(report)
-      if (plant) logCare(plant.id, 'note', `Dr. Green: ${report.headline}. ${report.summary}`)
+      const reportId = await saveReport(found, { photos, plant, symptoms, notes: notes.trim() })
       navigator.vibrate?.(20)
       setPhotos([])
       setSymptoms([])
       setNotes('')
-      navigate(`/report/${report.id}`)
+      navigate(`/report/${reportId}`)
     } catch (e) {
       if (ctl.signal.aborted) return
       setError(e instanceof AiError ? e : new AiError('Something went wrong. Please try again.'))
@@ -109,6 +81,11 @@ export function Doctor({ plantId }: { plantId: string | null }) {
           <button className="link" onClick={() => navigate('/settings')}>
             Add it in Settings
           </button>
+          , or{' '}
+          <button className="link" onClick={() => navigate(`/claude?task=doctor${selected ? `&plant=${selected}` : ''}`)}>
+            use your Claude app instead
+          </button>
+          .
         </Callout>
       )}
 

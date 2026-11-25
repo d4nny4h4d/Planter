@@ -173,7 +173,87 @@ function situation() {
 
 const HOUSE_STYLE = `Write for a home grower: practical, specific, second person, no filler. Keep each prose field to one to three sentences. Use metric units and °C. Numbers must be realistic for an established plant in a pot: watering intervalDays is the days between waterings in a temperate reference climate for each calendar season (the app shortens it for heat on its own). Toxicity must be accurate; when unsure, say so and err on the side of caution. Describe traditional uses as tradition, not medical advice.`
 
+/*
+  Manual mode ("Claude app"): the same request can be handed to the grower to send from their own Claude
+  app, and the reply pasted back. Both directions go through ask(), so prompts and post-processing stay shared.
+*/
+type Bridge = { kind: 'capture' } | { kind: 'replay'; reply: string }
+let bridge: Bridge | undefined
+
+class Captured {
+  prompt: string
+  constructor(prompt: string) {
+    this.prompt = prompt
+  }
+}
+
+function manualPrompt(schema: z.ZodType, system: string, content: Content) {
+  const photos = content.filter((c) => c.type === 'image').length
+  const text = content.flatMap((c) => (c.type === 'text' ? [c.text] : [])).join('\n\n')
+  return [
+    system,
+    '---',
+    text,
+    photos > 0 ? `The photo${photos > 1 ? 's are' : ' is'} attached to this message.` : '',
+    '---',
+    'Reply with one JSON object and nothing else, inside a ```json code block. It must match this JSON Schema exactly: every field present, no extra fields, no comments.',
+    JSON.stringify(betaZodOutputFormat(schema).schema),
+  ]
+    .filter(Boolean)
+    .join('\n\n')
+}
+
+function manualReply<T>(schema: z.ZodType<T>, reply: string): T {
+  const fenced = reply.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1]
+  const body = fenced ?? reply
+  const start = body.indexOf('{')
+  const end = body.lastIndexOf('}')
+  const incomplete = new AiError('That does not look like Claude’s complete answer. Copy the whole reply, from the first { to the last }, and paste it again.')
+  if (start < 0 || end <= start) throw incomplete
+  let data: unknown
+  try {
+    data = JSON.parse(body.slice(start, end + 1))
+  } catch {
+    throw incomplete
+  }
+  const parsed = schema.safeParse(data)
+  if (!parsed.success) throw new AiError('The answer is missing some fields. Ask Claude to "send the complete JSON again", then paste the new reply.')
+  return parsed.data
+}
+
+/** The text to send from the Claude app for the request that `run` would make. */
+export async function manualRequest(run: () => Promise<unknown>): Promise<string> {
+  bridge = { kind: 'capture' }
+  try {
+    await run()
+  } catch (e) {
+    if (e instanceof Captured) return e.prompt
+    throw e
+  } finally {
+    bridge = undefined
+  }
+  throw new AiError('Could not prepare the request.')
+}
+
+/** Finish the request that `run` would make, using a reply pasted from the Claude app. */
+export async function manualResult<T>(run: () => Promise<T>, reply: string): Promise<T> {
+  bridge = { kind: 'replay', reply }
+  try {
+    return await run()
+  } finally {
+    bridge = undefined
+  }
+}
+
+/** Stand-in for a photo the grower will attach in the Claude app themselves. */
+export const PHOTO_ELSEWHERE = 'data:image/jpeg;base64,'
+
 async function ask<T>(schema: z.ZodType<T>, system: string, content: Content, signal?: AbortSignal): Promise<T> {
+  const manual = bridge
+  bridge = undefined
+  if (manual?.kind === 'capture') throw new Captured(manualPrompt(schema, system, content))
+  if (manual?.kind === 'replay') return manualReply(schema, manual.reply)
+
   const { apiKey, model } = useStore.getState().settings
   if (!apiKey) throw new AiError('Add your Anthropic API key in Settings to use photo recognition.', true)
   if (!navigator.onLine) throw new AiError('You are offline. Photo recognition needs a connection.')

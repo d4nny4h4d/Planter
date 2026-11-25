@@ -1,4 +1,4 @@
-import { CloudSun, MapPin, ScanLine, Settings as Cog, Stethoscope } from 'lucide-react'
+import { CloudSun, MapPin, MessageSquareText, ScanLine, Settings as Cog, Stethoscope } from 'lucide-react'
 import { useMemo } from 'react'
 import { Enso } from '../components/art'
 import { TaskRow } from '../components/TaskRow'
@@ -59,9 +59,14 @@ export function Today() {
   return (
     <Screen id="/" tab>
       <header className="hero-head">
-        <button className="icon-btn hero-gear" aria-label="Settings" onClick={() => navigate('/settings')}>
-          <Cog />
-        </button>
+        <div className="hero-actions">
+          <button className="icon-btn" aria-label="Use your Claude app" onClick={() => navigate('/claude')}>
+            <MessageSquareText />
+          </button>
+          <button className="icon-btn" aria-label="Settings" onClick={() => navigate('/settings')}>
+            <Cog />
+          </button>
+        </div>
         <p className="eyebrow">{new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}</p>
         <h1>{greeting()}</h1>
         <button className="weather-pill" onClick={() => navigate('/settings')}>

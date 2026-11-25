@@ -102,6 +102,11 @@ export function PlanCard({ plant }: { plant: Plant }) {
             <button className="btn primary block" onClick={openSpot}>
               <MapPin /> Describe its spot
             </button>
+            {!hasKey && plant.spot && (
+              <button className="btn block" onClick={() => navigate(`/claude?task=plan&plant=${plant.id}`)}>
+                Write the plan with your Claude app
+              </button>
+            )}
           </>
         )}
 
@@ -194,7 +199,7 @@ export function PlanCard({ plant }: { plant: Plant }) {
             </Row>
 
             {stale && !busy && <Callout tone="warn">This plan may be out of date because {stale}.</Callout>}
-            <button className="btn block" disabled={busy} onClick={() => void generate()}>
+            <button className="btn block" disabled={busy} onClick={() => (hasKey ? void generate() : navigate(`/claude?task=plan&plant=${plant.id}`))}>
               <RefreshCw /> Update plan for current conditions
             </button>
           </>
@@ -209,7 +214,8 @@ export function PlanCard({ plant }: { plant: Plant }) {
         onSaved={() => {
           autoTried.current = true
           if (hasKey) void generate()
-          else setError(new AiError('Spot saved. Add your Anthropic API key in Settings to get the personal plan.', true))
+          // Give the sheet a moment to release its history entry before moving on.
+          else setTimeout(() => navigate(`/claude?task=plan&plant=${plant.id}`), 80)
         }}
       />
     </section>

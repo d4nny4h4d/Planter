@@ -7,6 +7,7 @@ import { useStore } from './lib/store'
 import { fetchWeather } from './lib/weather'
 import { Advice } from './screens/Advice'
 import { Bonsai } from './screens/Bonsai'
+import { ClaudeApp } from './screens/ClaudeApp'
 import { Doctor, Report } from './screens/Doctor'
 import { StyleGuide, TechniqueGuide } from './screens/Guides'
 import { PlantDetail } from './screens/PlantDetail'
@@ -73,6 +74,7 @@ export default function App() {
   else if (a === 'plants') screen = <Plants />
   else if (a === 'bonsai') screen = <Bonsai view={route.query.get('view')} />
   else if (a === 'settings') screen = <Settings />
+  else if (a === 'claude') screen = <ClaudeApp initialTask={route.query.get('task')} initialPlant={route.query.get('plant')} />
   else if (a === 'doctor') screen = <Doctor plantId={route.query.get('plant')} />
   else if (a === 'report' && b) screen = <Report id={b} />
   else if (a === 'scan') screen = <Scan initialMode={route.query.get('mode') === 'bonsai' ? 'bonsai' : 'plant'} />

@@ -4,6 +4,7 @@ import { useRef, useState } from 'react'
 import { SearchField } from '../components/collection'
 import { Screen, Segmented, TopBar } from '../components/ui'
 import { MODELS } from '../lib/ai'
+import { navigate } from '../lib/router'
 import { useStore } from '../lib/store'
 import type { Place } from '../lib/types'
 import { fetchWeather, locate, searchPlaces } from '../lib/weather'
@@ -119,6 +120,9 @@ export function Settings() {
           <p className="muted small">
             Identification, name look-ups, personal care plans, Dr. Green and styling advice use Claude. Create a key at platform.claude.com. It is stored only on this device and sent only to Anthropic. Everything else works without one.
           </p>
+          <button className="btn" onClick={() => navigate('/claude')}>
+            No key? Use your Claude app instead
+          </button>
           <div>
             <span className="label">Model</span>
             <div className="radio-list">

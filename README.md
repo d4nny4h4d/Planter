@@ -18,6 +18,8 @@ A personal plant and bonsai care app for the phone. It runs as an installable we
 
 Identification, name look-up, health checks and styling advice call the Claude API directly from the phone using your own API key (Settings → Photo recognition). The key is kept only on the device. The built-in libraries, schedules, journal and guides work without a key.
 
+**No API key?** The "Claude app" section does the same jobs by hand: Treecko writes the request, you send it from the Claude app on your own plan, and paste the reply back.
+
 Weather comes from Open-Meteo (no key needed) once a location is set.
 
 ## Run it

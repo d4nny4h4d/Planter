@@ -180,8 +180,8 @@ export function Scan({ initialMode }: { initialMode: Mode }) {
           </div>
           <div className="scan-hint">
             {!hasKey ? (
-              <button className="scan-notice" onClick={() => navigate('/settings')}>
-                Add your Anthropic API key in Settings to enable recognition →
+              <button className="scan-notice" onClick={() => navigate(`/claude?task=${mode}`, { replace: true })}>
+                No API key set. Identify it with your Claude app instead →
               </button>
             ) : camError ? (
               <span className="scan-notice">{camError}</span>

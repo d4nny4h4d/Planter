@@ -435,11 +435,22 @@ svg.lucide {
   gap: 8px;
   padding-top: 14px;
 }
-.hero-gear {
+.hero-actions {
   position: absolute;
   top: 4px;
   right: -10px;
+  display: flex;
   color: var(--ink-2);
+}
+.hero-actions .icon-btn {
+  color: inherit;
+}
+a.btn {
+  text-decoration: none;
+  color: inherit;
+}
+label.shot-add {
+  cursor: pointer;
 }
 .weather-pill {
   align-self: flex-start;
@@ -1304,6 +1315,7 @@ svg.lucide {
   overflow: hidden;
 }
 .radio-list label {
+  display: flex;
   flex-direction: row;
   align-items: center;
   gap: 14px;
