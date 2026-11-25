@@ -1,5 +1,6 @@
 import { Camera, CalendarClock, ChevronRight, CircleCheck, ShieldAlert, ShoppingBasket, Sprout, Stethoscope, Trash2, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { DoctorChat } from '../components/DoctorChat'
 import { Callout, Chip, Empty, Screen, Sheet, TopBar, usePhoto } from '../components/ui'
 import { AiError, diagnose } from '../lib/ai'
 import { SYMPTOMS, saveReport } from '../lib/doctor'
@@ -74,6 +75,13 @@ export function Doctor({ plantId }: { plantId: string | null }) {
         <h1>Dr. Green</h1>
       </header>
       <p className="muted">Photograph a plant that looks unwell. You get a diagnosis, a step-by-step cure and what to expect as it recovers.</p>
+
+      <DoctorChat plantId={selected} />
+
+      <div className="guide">
+        <h2 className="advice-headline">Check-up in Treecko</h2>
+        <p className="muted small">Saved here with photos, history and a re-check reminder.</p>
+      </div>
 
       {!hasKey && (
         <Callout tone="warn">

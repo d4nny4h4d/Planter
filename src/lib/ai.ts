@@ -394,7 +394,7 @@ ${situation()}`,
   }
 }
 
-function describe(plant: Plant) {
+export function describe(plant: Plant) {
   const name = plant.profile
     ? `${plant.profile.commonName} (${plant.profile.scientificName})`
     : `${plant.bonsai!.commonName} (${plant.bonsai!.scientificName}) grown as bonsai`
@@ -415,7 +415,7 @@ ${situation()}`,
   )
 }
 
-function describeSpot(plant: Plant) {
+export function describeSpot(plant: Plant) {
   const s = plant.spot ?? {}
   const lines = [`Kept ${plant.where}s.`]
   if (s.pot) lines.push(`Container: ${s.pot}${s.potCm ? `, about ${s.potCm} cm across` : ''}.`)

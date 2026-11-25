@@ -1,5 +1,6 @@
 import { Camera, ClipboardPaste, Copy, ExternalLink, Import, X } from 'lucide-react'
 import { useState } from 'react'
+import { DoctorChat } from '../components/DoctorChat'
 import { Callout, Screen, TopBar } from '../components/ui'
 import { AiError, diagnose, identifyBonsai, identifyPlant, lookupBonsai, lookupPlant, manualRequest, manualResult, PHOTO_ELSEWHERE, writeCarePlan } from '../lib/ai'
 import { SYMPTOMS, saveReport } from '../lib/doctor'
@@ -138,8 +139,15 @@ export function ClaudeApp({ initialTask, initialPlant }: { initialTask: string |
       <TopBar title="Claude app" />
       <div className="guide">
         <h1>Use your Claude app</h1>
+        <p className="muted">No API key or credit needed: these run in the Claude app on your own plan.</p>
+      </div>
+
+      <DoctorChat plantId={plantId} />
+
+      <div className="guide">
+        <h2 className="advice-headline">Bring an answer into Treecko</h2>
         <p className="muted">
-          No API key or credit needed. Treecko writes the request, you send it from the Claude app on your own plan, and Claude’s answer comes back here as a care sheet, plan or check-up.
+          For when you want the result saved in the app as a care sheet, plan or check-up. Treecko writes the request, you send it from Claude, and paste the reply back.
         </p>
       </div>
 

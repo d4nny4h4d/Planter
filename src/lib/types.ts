@@ -269,6 +269,8 @@ export interface Settings {
   apiKey: string
   model: string
   units: 'C' | 'F'
+  /** Link to the grower's own "Dr. Green" project in the Claude app */
+  doctorUrl?: string
   place?: Place
 }
 
