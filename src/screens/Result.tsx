@@ -1,5 +1,6 @@
 import { Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { Placeholder } from '../components/art'
 import { BonsaiSheet, CareSheet } from '../components/CareSheet'
 import { Chip, Screen, Segmented, TopBar } from '../components/ui'
 import { BONSAI_STYLES } from '../data/bonsai'
@@ -54,7 +55,9 @@ export function Result() {
         {draft.photo ? (
           <img className="result-photo" src={draft.photo} alt="" />
         ) : (
-          <div className="result-emoji">{draft.emoji}</div>
+          <div className="result-emoji">
+            <Placeholder kind={draft.kind} size={120} />
+          </div>
         )}
         <div className="result-head">
           <h1>{species.commonName}</h1>

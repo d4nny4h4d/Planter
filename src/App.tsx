@@ -1,5 +1,6 @@
 import { Home, Leaf, ScanLine, Stethoscope, TreePine } from 'lucide-react'
 import { useEffect } from 'react'
+import { BonsaiMark } from './components/art'
 import { Toast } from './components/ui'
 import { navigate, useRoute } from './lib/router'
 import { useStore } from './lib/store'
@@ -49,7 +50,7 @@ export default function App() {
     return (
       <div className="boot">
         <div className="empty">
-          <div className="empty-emoji">🥀</div>
+          <BonsaiMark size={104} />
           <h3>Could not open your collection</h3>
           <p>Your saved plants are untouched. Close other tabs of this app and try again.</p>
           <button className="btn primary" onClick={() => void useStore.getState().hydrate()}>
@@ -58,7 +59,12 @@ export default function App() {
         </div>
       </div>
     )
-  if (!ready) return <div className="boot">🌿</div>
+  if (!ready)
+    return (
+      <div className="boot">
+        <BonsaiMark size={88} />
+      </div>
+    )
 
   const [a, b] = route.parts
   const isTab = TABS.some((t) => t.path === route.path)

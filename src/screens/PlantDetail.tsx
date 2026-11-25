@@ -1,5 +1,6 @@
 import { Camera, Droplets, FlaskConical, HeartPulse, MoreHorizontal, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
+import { Placeholder } from '../components/art'
 import { BonsaiSheet, CareSheet } from '../components/CareSheet'
 import { PlanCard } from '../components/Plan'
 import { TaskRow } from '../components/TaskRow'
@@ -67,7 +68,7 @@ export function PlantDetail({ id }: { id: string }) {
   return (
     <Screen id={`/plant/${id}`}>
       <div className={`detail-hero ${cover ? '' : 'no-photo'}`}>
-        {cover ? <img src={cover} alt="" /> : <span className="detail-emoji">{plant.emoji}</span>}
+        {cover ? <img src={cover} alt="" /> : <Placeholder kind={plant.kind} size={150} />}
         <div className="detail-hero-bar">
           <button className="icon-btn glass" aria-label="Back" onClick={() => back(plant.kind === 'bonsai' ? '/bonsai' : '/plants')}>
             <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>

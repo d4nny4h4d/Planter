@@ -1,5 +1,6 @@
 import { CloudSun, MapPin, ScanLine, Settings as Cog, Stethoscope } from 'lucide-react'
 import { useMemo } from 'react'
+import { Enso } from '../components/art'
 import { TaskRow } from '../components/TaskRow'
 import { Empty, Screen } from '../components/ui'
 import { tasksFor, type Task } from '../lib/care'
@@ -103,7 +104,7 @@ export function Today() {
       ) : (
         <>
           <div className="summary card">
-            <div className="summary-num">{dueNow}</div>
+            <Enso size={68}>{dueNow}</Enso>
             <div>
               <b>{dueNow === 0 ? 'All caught up' : dueNow === 1 ? 'task needs you today' : 'tasks need you today'}</b>
               <p className="muted small">

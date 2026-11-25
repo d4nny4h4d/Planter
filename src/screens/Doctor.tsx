@@ -158,7 +158,7 @@ export function Doctor({ plantId }: { plantId: string | null }) {
           </button>
           {plants.map((p) => (
             <button key={p.id} className={`chip ${p.id === selected ? 'chip-on' : 'chip-plain'}`} aria-pressed={p.id === selected} onClick={() => setSelected(p.id)}>
-              {p.emoji} {p.nickname}
+              {p.nickname}
             </button>
           ))}
         </div>

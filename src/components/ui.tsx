@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 're
 import { createPortal } from 'react-dom'
 import { cachedPhoto, loadPhoto } from '../lib/image'
 import { back, wasPop } from '../lib/router'
+import { BonsaiMark, Mono, Placeholder } from './art'
 import { useStore } from '../lib/store'
 import type { MixPart, Plant } from '../lib/types'
 
@@ -227,10 +228,12 @@ export function usePhoto(id: string | undefined) {
   return src
 }
 
-export function Avatar({ plant, size = 'md' }: { plant: Pick<Plant, 'photos' | 'emoji'>; size?: 'sm' | 'md' | 'lg' | 'fill' }) {
+export function Avatar({ plant, size = 'sm' }: { plant: Pick<Plant, 'photos' | 'kind' | 'nickname'>; size?: 'sm' | 'fill' }) {
   const src = usePhoto(plant.photos.at(-1)?.id)
   return (
-    <span className={`avatar avatar-${size}`}>{src ? <img src={src} alt="" /> : <span className="avatar-emoji">{plant.emoji}</span>}</span>
+    <span className={`avatar avatar-${size}`}>
+      {src ? <img src={src} alt="" /> : size === 'sm' ? <Mono text={plant.nickname} /> : <Placeholder kind={plant.kind} size={92} />}
+    </span>
   )
 }
 
@@ -248,10 +251,10 @@ export function Segmented<T extends string>({ value, options, onChange }: { valu
   )
 }
 
-export function Empty({ emoji, title, children, action }: { emoji: string; title: string; children?: ReactNode; action?: ReactNode }) {
+export function Empty({ title, children, action }: { emoji?: string; title: string; children?: ReactNode; action?: ReactNode }) {
   return (
     <div className="empty">
-      <div className="empty-emoji">{emoji}</div>
+      <BonsaiMark size={104} />
       <h3>{title}</h3>
       {children && <p>{children}</p>}
       {action}

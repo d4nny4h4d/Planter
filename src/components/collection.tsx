@@ -1,12 +1,13 @@
 import { ChevronRight, Droplets, Search, Sparkles, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { AiError, lookupBonsai, lookupPlant } from '../lib/ai'
-import { speciesName, tasksFor } from '../lib/care'
+import { scientificName, speciesName, tasksFor } from '../lib/care'
 import { useCareContext } from '../lib/hooks'
 import { navigate } from '../lib/router'
 import { useStore } from '../lib/store'
 import type { Plant } from '../lib/types'
 import { relativeDay } from '../lib/util'
+import { Mono } from './art'
 import { Avatar } from './ui'
 
 export function PlantGrid({ plants }: { plants: Plant[] }) {
@@ -20,7 +21,7 @@ export function PlantGrid({ plants }: { plants: Plant[] }) {
             <Avatar plant={p} size="fill" />
             <span className="plant-card-body">
               <b>{p.nickname}</b>
-              <span className="muted small">{speciesName(p)}</span>
+              <span className={`muted small ${speciesName(p) === p.nickname ? 'sci' : ''}`}>{speciesName(p) === p.nickname ? scientificName(p) : speciesName(p)}</span>
               {water && (
                 <span className={`water-chip ${water.inDays <= 0 ? 'due' : ''}`}>
                   <Droplets size={13} /> {water.inDays < 0 ? 'Overdue' : cap1(relativeDay(water.dueAt))}
@@ -50,11 +51,11 @@ export function SearchField({ value, onChange, placeholder }: { value: string; o
   )
 }
 
-export function LibraryRow({ emoji, title, subtitle, onClick }: { emoji: string; title: string; subtitle: string; onClick: () => void }) {
+export function LibraryRow({ title, subtitle, onClick }: { emoji?: string; title: string; subtitle: string; onClick: () => void }) {
   return (
     <button className="row" onClick={onClick}>
       <span className="avatar avatar-sm">
-        <span className="avatar-emoji">{emoji}</span>
+        <Mono text={title} />
       </span>
       <span className="row-text">
         <b>{title}</b>
